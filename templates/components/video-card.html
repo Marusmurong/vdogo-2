@@ -1,0 +1,46 @@
+{% load static %}
+
+<div class="video-card">
+    <div class="video-cover">
+        <a href="{{ video.get_absolute_url }}" title="{{ video.title }}">
+            <img src="{{ video.cover_url }}" alt="{{ video.title }}" loading="lazy">
+            {% if video.duration %}
+            <span class="duration">{{ video.duration|time:"H:i:s" }}</span>
+            {% endif %}
+        </a>
+    </div>
+    <div class="video-info">
+        <h3 class="title">
+            <a href="{{ video.get_absolute_url }}" title="{{ video.title }}">{{ video.title }}</a>
+        </h3>
+        {% if video.is_series %}
+        <div class="series-info">
+            <span class="update-status {{ video.update_status }}">
+                {% if video.update_status == 'updating' %}
+                    连载中
+                {% elif video.update_status == 'completed' %}
+                    已完结
+                {% elif video.update_status == 'pending' %}
+                    待更新
+                {% endif %}
+            </span>
+            {% if video.current_episode %}
+            <span class="episodes">
+                <i class="iconfont iconvideo"></i>
+                更新至第{{ video.current_episode }}集
+            </span>
+            {% endif %}
+        </div>
+        {% endif %}
+        <div class="meta">
+            <span class="views">
+                <i class="iconfont iconplay"></i>
+                {{ video.views|default:"0" }}
+            </span>
+            <span class="time">
+                <i class="iconfont icontime"></i>
+                {{ video.created_at|timesince }}
+            </span>
+        </div>
+    </div>
+</div> 

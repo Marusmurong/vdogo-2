@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>视频播放</title>
+    <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet" />
+    <style>
+        .video-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <video
+            id="player"
+            class="video-js vjs-default-skin vjs-big-play-centered"
+            controls
+            preload="auto"
+            width="100%"
+            height="auto"
+        >
+            <p class="vjs-no-js">
+                To view this video please enable JavaScript
+            </p>
+        </video>
+    </div>
+
+    <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
+    <script>
+        // 视频信息 (从后端获取的JSON字符串)
+        const videoInfo = JSON.parse('{{ video_info|escapejs }}');
+        
+        // 初始化播放器
+        const player = videojs('player', {
+            fluid: true,
+            controls: true,
+            autoplay: false,
+            preload: 'auto'
+        });
+
+        // 设置视频源
+        if (videoInfo && videoInfo.m3u8_url) {
+            player.src({
+                src: videoInfo.m3u8_url,
+                type: 'application/x-mpegURL'
+            });
+            
+            // 如果有token，设置请求头
+            if (videoInfo.token) {
+                player.tech().xhr.beforeRequest = function(options) {
+                    options.headers = options.headers || {};
+                    options.headers['Authorization'] = `Bearer ${videoInfo.token}`;
+                    return options;
+                };
+            }
+        } else {
+            console.error('No video URL provided');
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}视频列表 - VDOGO{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>视频列表</h1>
+        </div>
+        <div class="col-auto">
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                    分类筛选
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{% url 'files:video_list' %}">全部</a></li>
+                    {% for category in categories %}
+                    <li><a class="dropdown-item {% if category.id|stringformat:'s' == selected_category %}active{% endif %}" 
+                           href="?category={{ category.id }}">{{ category.name }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="btn-group ms-2">
+                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                    标签筛选
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{% url 'files:video_list' %}">全部</a></li>
+                    {% for tag in tags %}
+                    <li><a class="dropdown-item {% if tag.id|stringformat:'s' == selected_tag %}active{% endif %}" 
+                           href="?tag={{ tag.id }}">{{ tag.name }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="btn-group ms-2">
+                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                    排序方式
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item {% if current_sort == 'newest' %}active{% endif %}" 
+                           href="?sort=newest">最新发布</a></li>
+                    <li><a class="dropdown-item {% if current_sort == 'popular' %}active{% endif %}" 
+                           href="?sort=popular">最多播放</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-4 g-4">
+        {% for video in videos %}
+        <div class="col">
+            <div class="card h-100">
+                <img src="{{ video.thumbnail.url }}" class="card-img-top" alt="{{ video.title }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ video.title }}</h5>
+                    <p class="card-text text-muted">
+                        <small>
+                            <i class="bi bi-eye"></i> {{ video.views }}
+                            <i class="bi bi-heart ms-2"></i> {{ video.likes }}
+                            <i class="bi bi-clock ms-2"></i> {{ video.duration }}
+                        </small>
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{% url 'files:video_detail' video.id %}" class="btn btn-primary btn-sm">观看</a>
+                        <small class="text-muted">{{ video.created_at|date:"Y-m-d" }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                暂无视频内容
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if videos.has_other_pages %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if videos.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ videos.previous_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_tag %}&tag={{ selected_tag }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for num in videos.paginator.page_range %}
+            <li class="page-item {% if num == videos.number %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_tag %}&tag={{ selected_tag }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            
+            {% if videos.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ videos.next_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_tag %}&tag={{ selected_tag }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

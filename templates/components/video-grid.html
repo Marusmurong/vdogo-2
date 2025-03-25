@@ -1,0 +1,120 @@
+{% load static %}
+<div class="video-grid-container">
+    <div class="video-grid-nav prev-btn">
+        <button class="nav-btn"><i class="iconfont iconjiantou_liebiaoxiangzuo"></i></button>
+    </div>
+    <div class="video-grid-wrapper">
+        <div class="video-grid" id="videoGrid">
+            {% for video in videos %}
+                {% include "components/video-card.html" with video=video %}
+            {% endfor %}
+        </div>
+    </div>
+    <div class="video-grid-nav next-btn">
+        <button class="nav-btn"><i class="iconfont iconjiantou_liebiaoxiangyou"></i></button>
+    </div>
+</div>
+
+<style>
+.video-grid-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+}
+
+.video-grid-wrapper {
+    overflow: hidden;
+}
+
+.video-grid {
+    display: flex;
+    transition: transform 0.5s ease;
+    gap: 20px;
+}
+
+.video-grid-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+}
+
+.prev-btn {
+    left: 0;
+}
+
+.next-btn {
+    right: 0;
+}
+
+.nav-btn {
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s;
+}
+
+.nav-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.nav-btn i {
+    font-size: 24px;
+}
+
+.nav-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.querySelector('.video-grid-container');
+    const grid = document.getElementById('videoGrid');
+    const prevBtn = container.querySelector('.prev-btn button');
+    const nextBtn = container.querySelector('.next-btn button');
+    
+    let currentPosition = 0;
+    const itemWidth = grid.children[0].offsetWidth + 20; // Including gap
+    const visibleItems = Math.floor(container.offsetWidth / itemWidth);
+    const maxPosition = Math.max(0, grid.children.length - visibleItems);
+    
+    function updateButtons() {
+        prevBtn.classList.toggle('disabled', currentPosition <= 0);
+        nextBtn.classList.toggle('disabled', currentPosition >= maxPosition);
+    }
+    
+    function moveGrid(direction) {
+        if (direction === 'prev' && currentPosition > 0) {
+            currentPosition--;
+        } else if (direction === 'next' && currentPosition < maxPosition) {
+            currentPosition++;
+        }
+        
+        const translateX = -currentPosition * itemWidth;
+        grid.style.transform = `translateX(${translateX}px)`;
+        updateButtons();
+    }
+    
+    prevBtn.addEventListener('click', () => moveGrid('prev'));
+    nextBtn.addEventListener('click', () => moveGrid('next'));
+    
+    // 初始化按钮状态
+    updateButtons();
+    
+    // 窗口大小改变时重新计算
+    window.addEventListener('resize', () => {
+        currentPosition = 0;
+        grid.style.transform = 'translateX(0)';
+        updateButtons();
+    });
+});
+</script> 

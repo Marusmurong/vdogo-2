@@ -1,0 +1,159 @@
+{% load static %}
+
+<!-- 全局音乐播放器组件 -->
+<div id="musicPlayerContainer" class="fixed-bottom bg-dark text-white p-3" style="display: none;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-3">
+                <div class="d-flex align-items-center">
+                    <img src="" alt="" id="player-cover" class="me-3" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                    <div>
+                        <h6 class="mb-0" id="player-title"></h6>
+                        <small class="text-muted" id="player-artist"></small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex flex-column align-items-center">
+                    <div class="text-center mb-2">
+                        <span class="text-white">123456</span>
+                    </div>
+                    <div class="player-controls d-flex align-items-center justify-content-center mb-2">
+                        <button class="btn btn-link text-white" id="previousButton">
+                            <i class="bi bi-skip-start-fill"></i>
+                        </button>
+                        <button class="btn btn-link text-white btn-lg mx-2" id="togglePlayButton">
+                            <i class="bi bi-play-fill" id="play-icon"></i>
+                        </button>
+                        <button class="btn btn-link text-white" id="nextButton">
+                            <i class="bi bi-skip-end-fill"></i>
+                        </button>
+                    </div>
+                    <div class="progress-container w-100">
+                        <div class="progress" style="height: 4px; cursor: pointer;" id="progressBar">
+                            <div class="progress-bar" role="progressbar" style="width: 0%; background-color: #1db954;"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <small id="current-time">0:00</small>
+                            <small id="total-time">0:00</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex align-items-center justify-content-end">
+                    <button class="btn btn-link text-white" id="lyricsButton" title="歌词">
+                        <i class="bi bi-chat-quote"></i>
+                    </button>
+                    <button class="btn btn-link text-white" id="playlistButton" title="播放列表">
+                        <i class="bi bi-music-note-list"></i>
+                    </button>
+                    <div class="volume-container d-flex align-items-center">
+                        <button class="btn btn-link text-white" id="volumeButton">
+                            <i class="bi bi-volume-up"></i>
+                        </button>
+                        <div class="volume-slider mx-2" style="width: 60px;">
+                            <input type="range" class="form-range" min="0" max="100" value="100" id="volumeSlider">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 播放列表侧边栏 -->
+<div id="playerPlaylist" class="player-sidebar bg-dark text-white" style="display: none;">
+    <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+        <h5 class="mb-0">播放列表</h5>
+        <button class="btn btn-link text-white" id="closePlaylistButton">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+    <div class="playlist-container p-2">
+        <ul class="list-group list-group-flush" id="playlistItems">
+            <!-- 播放列表项将通过JavaScript动态生成 -->
+        </ul>
+    </div>
+</div>
+
+<!-- 歌词侧边栏 -->
+<div id="playerLyrics" class="player-sidebar bg-dark text-white" style="display: none;">
+    <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+        <h5 class="mb-0">歌词</h5>
+        <button class="btn btn-link text-white" id="closeLyricsButton">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+    <div class="lyrics-container p-3" id="lyricsContent">
+        <p class="text-center text-muted">暂无歌词</p>
+    </div>
+</div>
+
+<!-- 隐藏的音频元素 -->
+<audio id="audioPlayer"></audio>
+
+<!-- 播放器所需的CSS -->
+<style>
+    .player-sidebar {
+        position: fixed;
+        right: 0;
+        bottom: 70px;
+        width: 300px;
+        height: 400px;
+        overflow-y: auto;
+        z-index: 1030;
+        box-shadow: -2px 0 10px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .playlist-container {
+        height: calc(100% - 60px);
+        overflow-y: auto;
+    }
+    
+    .lyrics-container {
+        height: calc(100% - 60px);
+        overflow-y: auto;
+        text-align: center;
+    }
+    
+    #playlistItems .list-group-item {
+        background-color: transparent;
+        border-color: rgba(255,255,255,0.1);
+        color: white;
+        cursor: pointer;
+    }
+    
+    #playlistItems .list-group-item:hover {
+        background-color: rgba(255,255,255,0.1);
+    }
+    
+    #playlistItems .list-group-item.active {
+        background-color: rgba(29, 185, 84, 0.3);
+        border-color: rgba(29, 185, 84, 0.5);
+    }
+    
+    .lyric-line {
+        margin: 10px 0;
+        transition: all 0.3s ease;
+    }
+    
+    .lyric-line.active {
+        color: #1db954;
+        font-size: 1.1em;
+        font-weight: bold;
+    }
+    
+    .volume-slider .form-range::-webkit-slider-thumb {
+        background: #1db954;
+    }
+    
+    .volume-slider .form-range::-moz-range-thumb {
+        background: #1db954;
+    }
+    
+    #progressBar:hover .progress-bar {
+        background-color: #1ed760 !important;
+    }
+</style> 

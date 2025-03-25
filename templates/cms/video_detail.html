@@ -1,0 +1,260 @@
+{% extends "cms/base.html" %}
+{% load static %}
+
+{% block title %}{{ video.title }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="video-player-container mb-4">
+                <div id="player" class="ratio ratio-16x9">
+                    <!-- 视频播放器将通过JavaScript动态加载 -->
+                </div>
+            </div>
+            
+            <h1 class="h3 mb-3">{{ video.title }}</h1>
+            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <span class="text-muted">
+                        <i class="bi bi-eye"></i> {{ video.views }} 次观看
+                    </span>
+                    <span class="text-muted ms-3">
+                        <i class="bi bi-calendar"></i> {{ video.created_at|date:"Y-m-d" }}
+                    </span>
+                </div>
+                <div>
+                    <button class="btn btn-outline-primary btn-sm" id="likeBtn">
+                        <i class="bi bi-heart{% if user_liked %}-fill{% endif %}"></i>
+                        <span id="likeCount">{{ video.likes }}</span>
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm ms-2" id="favoriteBtn">
+                        <i class="bi bi-bookmark{% if user_favorited %}-fill{% endif %}"></i>
+                        收藏
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm ms-2" id="shareBtn">
+                        <i class="bi bi-share"></i>
+                        分享
+                    </button>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">视频信息</h5>
+                    <div class="mb-3">
+                        <strong>分类：</strong>
+                        <a href="{% url 'video_list' %}?category={{ video.category.id }}" class="text-decoration-none">
+                            {{ video.category.name }}
+                        </a>
+                    </div>
+                    <div class="mb-3">
+                        <strong>标签：</strong>
+                        {% for tag in video.tags.all %}
+                        <a href="{% url 'video_list' %}?tag={{ tag.id }}" class="badge bg-secondary text-decoration-none me-1">
+                            {{ tag.name }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                    <div>
+                        <strong>简介：</strong>
+                        <p class="card-text">{{ video.description|linebreaks }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 评论区 -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">评论</h5>
+                    {% if user.is_authenticated %}
+                    <form id="commentForm" class="mb-4">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <textarea class="form-control" id="commentContent" rows="3" placeholder="发表评论..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">发表评论</button>
+                    </form>
+                    {% else %}
+                    <div class="alert alert-info">
+                        请<a href="{% url 'login' %}">登录</a>后发表评论
+                    </div>
+                    {% endif %}
+
+                    <div id="commentList">
+                        {% for comment in comments %}
+                        <div class="d-flex mb-3">
+                            <img src="{{ comment.user.avatar.url|default:'/static/images/default-avatar.png' }}" 
+                                 class="rounded-circle me-2" 
+                                 alt="{{ comment.user.username }}"
+                                 style="width: 40px; height: 40px;">
+                            <div>
+                                <div class="fw-bold">{{ comment.user.username }}</div>
+                                <div>{{ comment.content }}</div>
+                                <div class="text-muted">
+                                    <small>{{ comment.created_at|date:"Y-m-d H:i" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">暂无评论</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧推荐视频 -->
+        <div class="col-md-4">
+            <h5 class="mb-3">推荐视频</h5>
+            {% for recommended_video in recommended_videos %}
+            <div class="card mb-3">
+                <div class="row g-0">
+                    <div class="col-4">
+                        <img src="{{ recommended_video.thumbnail.url }}" 
+                             class="img-fluid rounded-start" 
+                             alt="{{ recommended_video.title }}">
+                    </div>
+                    <div class="col-8">
+                        <div class="card-body py-2">
+                            <h6 class="card-title mb-1">
+                                <a href="{% url 'video_detail' recommended_video.id %}" class="text-decoration-none">
+                                    {{ recommended_video.title }}
+                                </a>
+                            </h6>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    <i class="bi bi-eye"></i> {{ recommended_video.views }}
+                                    <i class="bi bi-clock ms-2"></i> {{ recommended_video.duration }}
+                                </small>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+<link rel="stylesheet" href="{% static 'css/video-player.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/video-player.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化视频播放器
+    const player = new VideoPlayer('#player', {
+        url: '{{ video.get_play_url }}',
+        autoplay: false,
+        poster: '{{ video.thumbnail.url }}'
+    });
+
+    // 点赞功能
+    const likeBtn = document.getElementById('likeBtn');
+    likeBtn.addEventListener('click', async function() {
+        if (!{{ user.is_authenticated|yesno:"true,false" }}) {
+            window.location.href = "{% url 'login' %}";
+            return;
+        }
+        
+        try {
+            const response = await fetch("{% url 'video_like' video.id %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                const icon = likeBtn.querySelector('i');
+                icon.classList.toggle('bi-heart');
+                icon.classList.toggle('bi-heart-fill');
+                document.getElementById('likeCount').textContent = data.likes_count;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+
+    // 收藏功能
+    const favoriteBtn = document.getElementById('favoriteBtn');
+    favoriteBtn.addEventListener('click', async function() {
+        if (!{{ user.is_authenticated|yesno:"true,false" }}) {
+            window.location.href = "{% url 'login' %}";
+            return;
+        }
+        
+        try {
+            const response = await fetch("{% url 'video_favorite' video.id %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                const icon = favoriteBtn.querySelector('i');
+                icon.classList.toggle('bi-bookmark');
+                icon.classList.toggle('bi-bookmark-fill');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+
+    // 分享功能
+    const shareBtn = document.getElementById('shareBtn');
+    shareBtn.addEventListener('click', function() {
+        if (navigator.share) {
+            navigator.share({
+                title: '{{ video.title }}',
+                text: '{{ video.description|truncatechars:100 }}',
+                url: window.location.href
+            });
+        } else {
+            // 复制链接到剪贴板
+            navigator.clipboard.writeText(window.location.href)
+                .then(() => alert('链接已复制到剪贴板'));
+        }
+    });
+
+    // 评论功能
+    const commentForm = document.getElementById('commentForm');
+    if (commentForm) {
+        commentForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const content = document.getElementById('commentContent').value;
+            if (!content.trim()) return;
+
+            try {
+                const response = await fetch("{% url 'video_comment' video.id %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ content })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    // 刷新评论列表
+                    location.reload();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    }
+});
+</script>
+{% endblock %} 
